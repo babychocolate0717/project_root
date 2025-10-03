@@ -1,12 +1,49 @@
 # project_root
 ## 最新備份
 
-### 看資料
+## 如何看輸出資料(PostgreSQL)
+## 一、微服務 API
+
 * [API 文件 (Docs)](http://172.21.208.1:8000/docs)
 * [儀表板總覽 (Dashboard)](http://172.21.208.1:8000/admin/dashboard)
 * [所有設備列表 (All Devices)](http://172.21.208.1:8000/admin/devices-simple)
 * **個別設備範例**: [設備 233497587702774](http://172.21.208.1:8000/admin/device/233497587702774)
 
+## 二、微服務資料庫
+
+### CMD 指令
+
+1.  **進入 Docker 容器：**
+    ```bash
+    docker-compose exec db bash
+    ```
+
+2.  **連線到資料庫：**
+    ```bash
+    psql -U user -d energy
+    ```
+
+3.  **列出所有資料表：**
+    ```sql
+    \dt;
+    ```
+
+4.  **查詢 `energy_cleaned` 資料表：**
+    執行以下 SQL 指令來查看最新的 10 筆清洗後的資料。
+    ```sql
+    SELECT * FROM energy_cleaned ORDER BY timestamp_utc DESC LIMIT 10;
+    ```
+
+5.  **退出 psql：**
+    當您想離開時，輸入 `\q;` 並按 Enter 即可。
+    ```sql
+    \q;
+    ```
+
+## 三、看 Grafana
+
+
+# 檔案總覽
 ### **根目錄**
 
 * `README.md`: 專案的總體說明文件，提供了整個專案的架構概覽，包含各個服務 (Agent, API) 的介紹、檔案結構說明以及快速連結。
