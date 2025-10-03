@@ -2,7 +2,7 @@
 
 # API Server Settings (from project-root)
 # This is where you set the IP address of computer A
-api_base_url: "http://172.21.208.1:8000"
+api_base_url: "https://b29c897cbba5.ngrok-free.app"
 auth_secret_key: "NTCUST-ENERGY-MONITOR"
 
 # Agent Behavior Settings

@@ -213,7 +213,7 @@ def to_series(df: pd.DataFrame, gran: str) -> pd.DataFrame:
 def load_joined_range(start: dt.datetime, end: dt.datetime) -> pd.DataFrame:
     """
     從 DB 載入指定時間範圍內，實際測量與模型預測的聯合數據。
-    *** 修正 2: 在 SQL 查詢後計算單點誤差 ***
+    *** 關鍵修正：確保 Pandas 正確處理時區，防止數據丟失 ***
     """
     sql = text("""
       WITH meas AS (
@@ -248,6 +248,15 @@ def load_joined_range(start: dt.datetime, end: dt.datetime) -> pd.DataFrame:
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
         
+    # --- 關鍵修復區域 ---
+    if not df.empty and 'ts' in df.columns:
+        # 1. 確保 ts 是 datetime 類型
+        df['ts'] = pd.to_datetime(df['ts'])
+        # 2. 如果帶有時區資訊 (coalesce 輸出可能帶)，則轉為 UTC 並去除時區資訊，確保對齊
+        if df['ts'].dt.tz is not None:
+             df['ts'] = df['ts'].dt.tz_convert('UTC').dt.tz_localize(None)
+    # --- 關鍵修復結束 ---
+    
     # --- Pandas 計算單點誤差 ---
     df = df.dropna(subset=['actual_power_w', 'predicted_power_w']).copy()
     
@@ -259,7 +268,6 @@ def load_joined_range(start: dt.datetime, end: dt.datetime) -> pd.DataFrame:
     df["ape"]     = (df["abs_err"] / actual_power) * 100
 
     return df
-
 
 # --------------------
 # 數據處理與模型預測 (Data Processing & Prediction)

@@ -82,4 +82,19 @@ Traceback (most recent call last):
   File "C:\Users\ckklab\Desktop\project-root_0909\agent\integrated_agent.py", line 709, in run
     time.sleep(60)
 KeyboardInterrupt
-^C
+^CTraceback (most recent call last):
+  File "C:\Users\ckklab\Desktop\project-root_0909\agent\integrated_agent.py", line 696, in run
+    self.process_and_send_data()
+  File "C:\Users\ckklab\Desktop\project-root_0909\agent\integrated_agent.py", line 633, in process_and_send_data
+    print(f"\n\u2705 ¥\¯ÓºÊ±± - CPU: {final_data['cpu']}W | GPU: {final_data['gpu']}W | ¨t²Î: {final_data['system_power']}W")
+UnicodeEncodeError: 'cp950' codec can't encode character '\u2705' in position 2: illegal multibyte sequence
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ckklab\Desktop\project-root_0909\agent\integrated_agent.py", line 717, in <module>
+    agent.run()
+  File "C:\Users\ckklab\Desktop\project-root_0909\agent\integrated_agent.py", line 709, in run
+    time.sleep(60)
+KeyboardInterrupt
+^C^C^C

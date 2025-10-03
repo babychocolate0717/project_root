@@ -25,14 +25,70 @@ AUTH_SECRET_KEY = "NTCUST-ENERGY-MONITOR"
 FALLBACK_TO_CSV = True
 
 # config.yaml
+# agent_with_auth_english.py
+# English version to avoid encoding issues
+import psutil
+import platform
+import uuid
+import getpass
+import time
+import json
+import csv
+import os
+import sys
+import requests
+import hashlib
+import hmac
+from datetime import datetime, timezone, time as dtime
+import subprocess
+from pynput import mouse, keyboard
+import threading
+import socket
+import yaml
+from typing import Dict, Any
+
+# ---------- Configuration ----------
+API_BASE_URL = "http://localhost:8000"
+AUTH_SECRET_KEY = "NTCUST-ENERGY-MONITOR"
+FALLBACK_TO_CSV = True
+
+# config.yaml - 修正版
 def load_config():
+    # 判斷是否為打包後的 exe
+    if getattr(sys, 'frozen', False):
+        # 打包後，config.yaml 應該在 exe 同一目錄
+        base_path = os.path.dirname(sys.executable)
+    else:
+        # 開發環境，使用當前目錄
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    
+    config_path = os.path.join(base_path, 'config.yaml')
+    
     try:
-        with open('config.yaml', 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
+        print(f"🔍 嘗試載入設定檔: {config_path}")
+        with open(config_path, 'r', encoding='utf-8') as f:
+            loaded_config = yaml.safe_load(f)
+            print(f"✅ 成功載入設定！")
+            print(f"   API URL: {loaded_config.get('api_base_url', 'Not found')}")
+            print(f"   收集間隔: {loaded_config.get('collection_interval', 60)}秒")
+            return loaded_config
     except FileNotFoundError:
-        print("警告: config.yaml 不存在，將使用預設設定。")
+        print(f"⚠️ 警告: config.yaml 不存在於 {config_path}")
+        print(f"   將使用預設設定")
         return {
+            'api_base_url': 'http://localhost:8000',
+            'auth_secret_key': 'NTCUST-ENERGY-MONITOR',
             'collection_interval': 60,
+            'fallback_to_csv': True,
+            'quota': {'daily_limit_kwh': 100}
+        }
+    except Exception as e:
+        print(f"❌ 載入設定檔時發生錯誤: {e}")
+        return {
+            'api_base_url': 'http://localhost:8000',
+            'auth_secret_key': 'NTCUST-ENERGY-MONITOR',
+            'collection_interval': 60,
+            'fallback_to_csv': True,
             'quota': {'daily_limit_kwh': 100}
         }
 
@@ -40,6 +96,7 @@ config = load_config()
 API_BASE_URL = config.get('api_base_url', API_BASE_URL)
 AUTH_SECRET_KEY = config.get('auth_secret_key', AUTH_SECRET_KEY)
 FALLBACK_TO_CSV = config.get('fallback_to_csv', FALLBACK_TO_CSV)
+
 
 
 # ---------- Class Schedule ----------
