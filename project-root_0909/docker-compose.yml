@@ -1,0 +1,91 @@
+services:
+  db:
+    image: postgres:13
+    restart: always
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+      - 168.95.1.1
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: energy
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # 🆕 添加初始化腳本
+      - ./ingestion-api/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    # 🆕 添加健康檢查
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d energy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ingestion:
+    build:
+      context: ./ingestion-api
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+      - 168.95.1.1
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./ingestion-api:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy  # 🆕 等待資料庫健康
+      cleaner:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+    environment:
+      - PYTHONUNBUFFERED=1
+      - AUTH_SECRET_KEY=NTCUST-ENERGY-MONITOR
+      - COMPATIBILITY_MODE=true
+      - DEFAULT_ALLOWED_IPS=""
+      # 🆕 添加資料庫連接字串
+      - DATABASE_URL=postgresql://user:password@db:5432/energy
+
+  cleaner:
+    build:
+      context: ./cleaning-api
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+      - 168.95.1.1
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8100 --reload
+    volumes:
+      - ./cleaning-api:/code
+    ports:
+      - "8100:8100"
+    depends_on:
+      db:
+        condition: service_healthy  # 🆕 等待資料庫健康
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    environment:
+      # 🆕 添加資料庫連接字串（如果需要）
+      - DATABASE_URL=postgresql://user:password@db:5432/energy
+
+volumes:
+  pgdata:
