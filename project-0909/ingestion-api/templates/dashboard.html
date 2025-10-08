@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>能源監控儀表板</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 960px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; }
+        .dashboard { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 5px; }
+        .metric { flex: 1; min-width: 180px; background: #fff; padding: 15px; border-radius: 5px; border: 1px solid #e9ecef; text-align: center; }
+        .metric .label { font-size: 14px; color: #6c757d; display: block; margin-bottom: 5px; }
+        .metric .value { font-size: 28px; font-weight: bold; color: #0056b3; }
+        .metric.highlight .value { color: #28a745; }
+        .alert { padding: 15px; margin-bottom: 20px; border-radius: 4px; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .selector { margin-bottom: 30px; }
+        label { font-weight: bold; margin-right: 10px; }
+        select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>能源監控儀表板</h1>
+
+        <div class="selector">
+            <label for="device_selector">選擇儀表板視圖:</label>
+            <select id="device_selector" onchange="location = this.value;">
+                <option value="/admin/dashboard-ui?device_id=all" {% if selected_device_id == 'all' %}selected{% endif %}>
+                    全部設備 (企業總覽)
+                </option>
+                {% for device in all_devices %}
+                <option value="/admin/dashboard-ui?device_id={{ device.mac_address }}" {% if selected_device_id == device.mac_address %}selected{% endif %}>
+                    {{ device.device_name }} ({{ device.user_name }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if view_mode == 'all' %}
+            <h2>企業總覽</h2>
+            <div class="dashboard">
+                {% if dashboard and not dashboard.error %}
+                    <div class="metric"><span class="label">本月預算 (kgCO2e)</span><span class="value">{{ "%.2f"|format(dashboard.monthly_budget_kgco2e) }}</span></div>
+                    <div class="metric"><span class="label">目前已消耗 (kgCO2e)</span><span class="value">{{ "%.2f"|format(dashboard.current_consumption_kgco2e) }}</span></div>
+                    <div class="metric"><span class="label">消耗進度</span><span class="value">{{ "%.1f"|format(dashboard.consumption_percentage) }} %</span></div>
+                    <div class="metric highlight"><span class="label">建議可運行設備數</span><span class="value">{{ dashboard.recommended_device_count }} 台</span></div>
+                {% else %}
+                    <div class="alert alert-danger">{{ dashboard.error or "無法載入數據" }}</div>
+                {% endif %}
+            </div>
+        {% elif view_mode == 'device' %}
+            <h2>設備詳細指標 (過去 24 小時)</h2>
+            <div class="dashboard">
+                {% if dashboard and not dashboard.error %}
+                    <div class="metric"><span class="label">平均功耗 (W)</span><span class="value">{{ "%.2f"|format(dashboard.avg_power_watt_24h) }}</span></div>
+                    <div class="metric"><span class="label">最高功耗 (W)</span><span class="value">{{ "%.2f"|format(dashboard.peak_power_watt_24h) }}</span></div>
+                    <div class="metric"><span class="label">總碳排放 (kgCO2e)</span><span class="value">{{ "%.3f"|format(dashboard.total_carbon_kgco2e_24h) }}</span></div>
+                    <div class="metric"><span class="label">運作時數 (小時)</span><span class="value">{{ "%.1f"|format(dashboard.operating_hours_24h) }}</span></div>
+                {% else %}
+                    <div class="alert alert-danger">{{ dashboard.error or "無法載入此設備的數據" }}</div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
