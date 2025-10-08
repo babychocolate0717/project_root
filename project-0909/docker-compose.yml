@@ -1,0 +1,75 @@
+services:
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: energy
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./ingestion-api/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d energy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ingestion:
+    build:
+      context: ./ingestion-api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./ingestion-api:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      cleaner:
+        condition: service_started
+      # --- vvv 新增以下依賴 vvv ---
+      prediction:
+        condition: service_started
+      # --- ^^^ 新增以上依賴 ^^^ ---
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://user:password@db:5432/energy
+      # (您其他的環境變數...)
+
+  cleaner:
+    build:
+      context: ./cleaning-api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8100 --reload
+    volumes:
+      - ./cleaning-api:/code
+    ports:
+      - "8100:8100"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # --- vvv 新增以下完整的 prediction 服務 vvv ---
+  prediction:
+    build:
+      context: ./prediction-api
+    command: uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+    volumes:
+      - ./prediction-api:/code
+      # 將 models 資料夾掛載進去，這樣 API 才能讀取到模型檔案
+      - ./models:/code/models
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://user:password@db:5432/energy
+      # (您 prediction-api 可能需要的其他環境變數)
+  # --- ^^^ 新增以上完整的 prediction 服務 ^^^ ---
+
+volumes:
+  pgdata:
