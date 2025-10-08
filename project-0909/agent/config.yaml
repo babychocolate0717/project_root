@@ -1,0 +1,12 @@
+# --- Agent Configuration (Integrated Version) ---
+
+# API Server Settings (from project-root)
+# This is where you set the IP address of computer A
+api_base_url: "https://b29c897cbba5.ngrok-free.app"
+auth_secret_key: "NTCUST-ENERGY-MONITOR"
+
+# Agent Behavior Settings
+collection_interval: 60  # Data collection interval in seconds
+change_threshold: 5      # Threshold for detecting significant data changes
+fallback_to_csv: true    # Save to CSV if API is unavailable
+

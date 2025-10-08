@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "C:\Users\alisa\OneDrive\Desktop\cc\project-root\agent\agent_with_auth.py", line 641, in <module>
+    main()
+  File "C:\Users\alisa\OneDrive\Desktop\cc\project-root\agent\agent_with_auth.py", line 585, in main
+    print("\U0001f680 Agent ±Ò°Ê¤¤...")
+UnicodeEncodeError: 'cp950' codec can't encode character '\U0001f680' in position 0: illegal multibyte sequence
