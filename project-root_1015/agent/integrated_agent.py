@@ -618,7 +618,7 @@ def send_to_api(data):
             f"{API_BASE_URL}/ingest",
             json=api_data,
             headers=headers,
-            timeout=10
+            timeout=60
         )
         
         if response.status_code == 200:

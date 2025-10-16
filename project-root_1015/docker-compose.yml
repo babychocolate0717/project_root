@@ -65,6 +65,9 @@ services:
     depends_on:
       db: { condition: service_healthy }
     environment:
+      - PYTHONUNBUFFERED=1
+      - AUTH_SECRET_KEY=NTCUST-ENERGY-MONITOR  
+      - COMPATIBILITY_MODE=true                 
       - DATABASE_URL=postgresql://user:password@db:5432/energy
     restart: always
 
@@ -76,6 +79,9 @@ services:
     depends_on:
       db: { condition: service_healthy }
     environment:
+      - PYTHONUNBUFFERED=1
+      - AUTH_SECRET_KEY=NTCUST-ENERGY-MONITOR  
+      - COMPATIBILITY_MODE=true                
       - DATABASE_URL=postgresql://user:password@db:5432/energy
     restart: always
 
